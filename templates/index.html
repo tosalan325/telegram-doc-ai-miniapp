@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>DocCheck AI</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Telegram Mini App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Наши стили -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="badge">AI Document Checker</div>
+            <h1>Проверка документа</h1>
+            <p>
+                Загрузите договор, PDF, фото или скан — AI поможет понять документ простым языком.
+            </p>
+        </header>
+
+        <main class="card">
+            <section class="upload-section">
+                <label class="file-label" for="fileInput">
+                    <span class="file-icon">📄</span>
+                    <span class="file-title">Выбрать документ</span>
+                    <span class="file-subtitle">
+                        PDF, DOCX, TXT, JPG, PNG, WEBP
+                    </span>
+                </label>
+
+                <input
+                    id="fileInput"
+                    type="file"
+                    accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.webp"
+                >
+
+                <div id="fileName" class="file-name">
+                    Файл не выбран
+                </div>
+
+                <button id="analyzeButton" class="button" disabled>
+                    Проверить документ
+                </button>
+            </section>
+
+            <section id="statusBox" class="status hidden">
+                <div class="loader"></div>
+                <span id="statusText">Обрабатываю документ...</span>
+            </section>
+
+            <section id="errorBox" class="error hidden"></section>
+
+            <section id="resultBox" class="result hidden">
+                <h2>Результат анализа</h2>
+                <div id="resultText"></div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>
+                Это не юридическая консультация. Для важных сделок лучше обратиться к специалисту.
+            </p>
+        </footer>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
