@@ -10,7 +10,7 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <!-- Наши стили -->
-    <link rel="stylesheet" href="/static/style.css?v=3">
+    <link rel="stylesheet" href="/static/style.css?v=4">
 </head>
 <body>
     <div class="app">
@@ -44,72 +44,72 @@
                     Файл не выбран
                 </div>
 
-                <div id="analysisPanel" class="analysis-panel hidden">
+                <div id="analysisPanel" class="analysis-panel">
                     <div class="analysis-title">
                         Что хотите узнать?
                     </div>
 
                     <div class="analysis-grid">
                         <button class="analysis-button active" data-type="full">
-                            🧾 Полный
+                            🧾 Полный<br>анализ
                         </button>
 
                         <button class="analysis-button" data-type="summary">
-                            📄 Резюме
+                            📄 Краткое<br>резюме
                         </button>
 
                         <button class="analysis-button" data-type="strengths">
-                            ✅ Сильные
+                            ✅ Сильные<br>стороны
                         </button>
 
                         <button class="analysis-button" data-type="weaknesses">
-                            ⚠️ Слабые
+                            ⚠️ Слабые<br>стороны
                         </button>
 
                         <button class="analysis-button" data-type="risks">
-                            ❗ Риски
+                            ❗ Риски<br>документа
                         </button>
 
                         <button class="analysis-button" data-type="dates">
-                            📅 Даты
+                            📅 Даты<br>и сроки
                         </button>
 
                         <button class="analysis-button" data-type="money">
-                            💰 Суммы
+                            💰 Деньги<br>и суммы
                         </button>
 
                         <button class="analysis-button" data-type="parties">
-                            👥 Стороны
+                            👥 Стороны<br>документа
                         </button>
 
                         <button class="analysis-button" data-type="attention">
-                            🔍 Важно
+                            🔍 Важные<br>пункты
                         </button>
 
                         <button class="analysis-button" data-type="simple">
-                            🧠 Простыми
+                            🧠 Простыми<br>словами
                         </button>
 
                         <button class="analysis-button" data-type="fixes">
-                            ✍️ Исправить
+                            ✍️ Что<br>исправить
                         </button>
 
                         <button class="analysis-button" data-type="questions">
-                            ❓ Вопросы
+                            ❓ Вопросы<br>стороне
                         </button>
 
                         <button class="analysis-button" data-type="dangerous">
-                            🟥 Опасное
+                            🟥 Опасные<br>фразы
                         </button>
 
                         <button class="analysis-button" data-type="score">
-                            📊 Оценка
+                            📊 Оценка<br>документа
                         </button>
                     </div>
                 </div>
 
                 <button id="analyzeButton" class="button" disabled>
-                    🧾 Сделать полный анализ
+                    Сначала выберите документ
                 </button>
             </section>
 
@@ -140,6 +140,6 @@
         </footer>
     </div>
 
-    <script src="/static/app.js?v=3"></script>
+    <script src="/static/app.js?v=4"></script>
 </body>
 </html>

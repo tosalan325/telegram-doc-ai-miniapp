@@ -25,15 +25,15 @@ const analysisButtonTexts = {
     summary: "📄 Сделать краткое резюме",
     strengths: "✅ Показать сильные стороны",
     weaknesses: "⚠️ Показать слабые стороны",
-    risks: "❗ Найти риски",
+    risks: "❗ Найти риски документа",
     dates: "📅 Найти даты и сроки",
-    money: "💰 Найти суммы и платежи",
+    money: "💰 Найти деньги и суммы",
     parties: "👥 Определить стороны",
-    attention: "🔍 На что обратить внимание",
+    attention: "🔍 Показать важные пункты",
     simple: "🧠 Объяснить простыми словами",
-    fixes: "✍️ Что исправить",
-    questions: "❓ Подготовить вопросы",
-    dangerous: "🟥 Найти опасные формулировки",
+    fixes: "✍️ Показать, что исправить",
+    questions: "❓ Подготовить вопросы стороне",
+    dangerous: "🟥 Найти опасные фразы",
     score: "📊 Оценить документ",
 };
 
@@ -84,6 +84,11 @@ function hideResult() {
 }
 
 function setAnalyzeButtonText() {
+    if (!selectedFile) {
+        analyzeButton.textContent = "Сначала выберите документ";
+        return;
+    }
+
     analyzeButton.textContent =
         analysisButtonTexts[selectedAnalysisType] || "Проверить документ";
 }
@@ -94,13 +99,6 @@ function resetSelectedFile() {
     fileName.textContent = "Файл не выбран";
     fileName.classList.remove("selected");
     analyzeButton.disabled = true;
-
-    analysisPanel.classList.add("hidden");
-    selectedAnalysisType = "full";
-
-    analysisButtons.forEach((button) => {
-        button.classList.toggle("active", button.dataset.type === "full");
-    });
 
     setAnalyzeButtonText();
 }
@@ -143,8 +141,9 @@ fileInput.addEventListener("change", () => {
 
     fileName.textContent = `✅ Выбран файл: ${selectedFile.name}`;
     fileName.classList.add("selected");
+
     analyzeButton.disabled = false;
-    analysisPanel.classList.remove("hidden");
+    setAnalyzeButtonText();
 });
 
 analyzeButton.addEventListener("click", async () => {
@@ -161,6 +160,7 @@ analyzeButton.addEventListener("click", async () => {
     );
 
     analyzeButton.disabled = true;
+
     analysisButtons.forEach((button) => {
         button.disabled = true;
     });
@@ -186,11 +186,14 @@ analyzeButton.addEventListener("click", async () => {
         showError(error.message || "Произошла неизвестная ошибка.");
     } finally {
         hideStatus();
-        analyzeButton.disabled = false;
+
+        analyzeButton.disabled = !selectedFile;
 
         analysisButtons.forEach((button) => {
             button.disabled = false;
         });
+
+        setAnalyzeButtonText();
     }
 });
 
