@@ -13,8 +13,46 @@ const statusText = document.getElementById("statusText");
 const errorBox = document.getElementById("errorBox");
 const resultBox = document.getElementById("resultBox");
 const resultText = document.getElementById("resultText");
+const analysisPanel = document.getElementById("analysisPanel");
+const analysisButtons = document.querySelectorAll(".analysis-button");
+const copyButton = document.getElementById("copyButton");
 
 let selectedFile = null;
+let selectedAnalysisType = "full";
+
+const analysisButtonTexts = {
+    full: "🧾 Сделать полный анализ",
+    summary: "📄 Сделать краткое резюме",
+    strengths: "✅ Показать сильные стороны",
+    weaknesses: "⚠️ Показать слабые стороны",
+    risks: "❗ Найти риски",
+    dates: "📅 Найти даты и сроки",
+    money: "💰 Найти суммы и платежи",
+    parties: "👥 Определить стороны",
+    attention: "🔍 На что обратить внимание",
+    simple: "🧠 Объяснить простыми словами",
+    fixes: "✍️ Что исправить",
+    questions: "❓ Подготовить вопросы",
+    dangerous: "🟥 Найти опасные формулировки",
+    score: "📊 Оценить документ",
+};
+
+const analysisStatusTexts = {
+    full: "Делаю полный анализ документа...",
+    summary: "Готовлю краткое резюме...",
+    strengths: "Ищу сильные стороны документа...",
+    weaknesses: "Ищу слабые стороны документа...",
+    risks: "Проверяю возможные риски...",
+    dates: "Ищу даты и сроки...",
+    money: "Ищу суммы, платежи и штрафы...",
+    parties: "Определяю стороны документа...",
+    attention: "Выделяю важные пункты...",
+    simple: "Объясняю документ простыми словами...",
+    fixes: "Ищу, что можно улучшить...",
+    questions: "Готовлю вопросы второй стороне...",
+    dangerous: "Ищу опасные формулировки...",
+    score: "Оцениваю документ...",
+};
 
 function showStatus(message) {
     statusText.textContent = message;
@@ -45,13 +83,43 @@ function hideResult() {
     resultText.textContent = "";
 }
 
+function setAnalyzeButtonText() {
+    analyzeButton.textContent =
+        analysisButtonTexts[selectedAnalysisType] || "Проверить документ";
+}
+
 function resetSelectedFile() {
     selectedFile = null;
     fileInput.value = "";
     fileName.textContent = "Файл не выбран";
     fileName.classList.remove("selected");
     analyzeButton.disabled = true;
+
+    analysisPanel.classList.add("hidden");
+    selectedAnalysisType = "full";
+
+    analysisButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.type === "full");
+    });
+
+    setAnalyzeButtonText();
 }
+
+analysisButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        selectedAnalysisType = button.dataset.type || "full";
+
+        analysisButtons.forEach((item) => {
+            item.classList.remove("active");
+        });
+
+        button.classList.add("active");
+
+        setAnalyzeButtonText();
+        hideError();
+        hideResult();
+    });
+});
 
 fileInput.addEventListener("change", () => {
     hideError();
@@ -76,6 +144,7 @@ fileInput.addEventListener("change", () => {
     fileName.textContent = `✅ Выбран файл: ${selectedFile.name}`;
     fileName.classList.add("selected");
     analyzeButton.disabled = false;
+    analysisPanel.classList.remove("hidden");
 });
 
 analyzeButton.addEventListener("click", async () => {
@@ -86,11 +155,19 @@ analyzeButton.addEventListener("click", async () => {
 
     hideError();
     hideResult();
-    showStatus("Загружаю и анализирую документ...");
+
+    showStatus(
+        analysisStatusTexts[selectedAnalysisType] || "Анализирую документ..."
+    );
+
     analyzeButton.disabled = true;
+    analysisButtons.forEach((button) => {
+        button.disabled = true;
+    });
 
     const formData = new FormData();
     formData.append("file", selectedFile);
+    formData.append("analysis_type", selectedAnalysisType);
 
     try {
         const response = await fetch("/api/analyze", {
@@ -110,5 +187,30 @@ analyzeButton.addEventListener("click", async () => {
     } finally {
         hideStatus();
         analyzeButton.disabled = false;
+
+        analysisButtons.forEach((button) => {
+            button.disabled = false;
+        });
+    }
+});
+
+copyButton.addEventListener("click", async () => {
+    const text = resultText.textContent.trim();
+
+    if (!text) {
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(text);
+
+        const oldText = copyButton.textContent;
+        copyButton.textContent = "✅ Скопировано";
+
+        setTimeout(() => {
+            copyButton.textContent = oldText;
+        }, 1600);
+    } catch (error) {
+        showError("Не удалось скопировать текст. Выделите результат вручную.");
     }
 });
