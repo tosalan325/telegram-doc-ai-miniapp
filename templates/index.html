@@ -6,11 +6,9 @@
 
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- Telegram Mini App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Наши стили -->
-    <link rel="stylesheet" href="/static/style.css?v=4">
+    <link rel="stylesheet" href="/static/style.css?v=6">
 </head>
 <body>
     <div class="app">
@@ -25,6 +23,20 @@
         </header>
 
         <main class="card">
+            <section class="role-panel">
+                <div class="section-title">Выберите ситуацию</div>
+
+                <div class="role-grid">
+                    <button id="signerRoleButton" class="role-button active" data-role="signer">
+                        🔎 Проверяю<br>перед подписью
+                    </button>
+
+                    <button id="authorRoleButton" class="role-button" data-role="author">
+                        ✍️ Составляю<br>документ
+                    </button>
+                </div>
+            </section>
+
             <section class="upload-section">
                 <label class="file-label" for="fileInput">
                     <span class="file-icon">📄</span>
@@ -44,10 +56,28 @@
                     Файл не выбран
                 </div>
 
-                <div id="analysisPanel" class="analysis-panel">
-                    <div class="analysis-title">
-                        Что хотите узнать?
+                <div id="compareBox" class="compare-box hidden">
+                    <label class="file-label second-file" for="fileInput2">
+                        <span class="file-icon">📑</span>
+                        <span class="file-title">Выбрать второй документ</span>
+                        <span class="file-subtitle">
+                            Для сравнения с первым файлом
+                        </span>
+                    </label>
+
+                    <input
+                        id="fileInput2"
+                        type="file"
+                        accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp"
+                    >
+
+                    <div id="fileName2" class="file-name">
+                        Второй файл не выбран
                     </div>
+                </div>
+
+                <div id="analysisPanel" class="analysis-panel">
+                    <div class="section-title">Что хотите узнать?</div>
 
                     <div class="analysis-grid">
                         <button class="analysis-button active" data-type="full">
@@ -105,7 +135,27 @@
                         <button class="analysis-button" data-type="score">
                             📊 Оценка<br>документа
                         </button>
+
+                        <button class="analysis-button wide" data-type="custom">
+                            💬 Свой<br>вопрос
+                        </button>
+
+                        <button class="analysis-button wide" data-type="compare">
+                            🔄 Сравнить<br>документы
+                        </button>
                     </div>
+                </div>
+
+                <div id="customQuestionBox" class="custom-question-box hidden">
+                    <label class="section-title" for="customQuestion">
+                        Ваш вопрос по документу
+                    </label>
+
+                    <textarea
+                        id="customQuestion"
+                        rows="3"
+                        placeholder="Например: можно ли вернуть аванс? Что будет, если нарушить срок?"
+                    ></textarea>
                 </div>
 
                 <button id="analyzeButton" class="button" disabled>
@@ -131,6 +181,18 @@
 
                 <div id="resultText"></div>
             </section>
+
+            <section id="historyBox" class="history hidden">
+                <div class="history-header">
+                    <h2>История проверок</h2>
+
+                    <button id="clearHistoryButton" class="clear-history-button" type="button">
+                        Очистить
+                    </button>
+                </div>
+
+                <div id="historyList" class="history-list"></div>
+            </section>
         </main>
 
         <footer class="footer">
@@ -140,6 +202,6 @@
         </footer>
     </div>
 
-    <script src="/static/app.js?v=4"></script>
+    <script src="/static/app.js?v=6"></script>
 </body>
 </html>

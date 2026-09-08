@@ -1,18 +1,19 @@
 import asyncio
 import base64
 import os
+import uuid
 from pathlib import Path
+from typing import Optional
 
 import pymupdf
 import requests
 from PIL import Image
 from docx import Document
 from dotenv import load_dotenv
-from fastapi import FastAPI, File, UploadFile, Form
+from fastapi import FastAPI, File, UploadFile, Form, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi import Request
 from pypdf import PdfReader
 
 # =========================
@@ -29,25 +30,14 @@ WEBAPP_URL = os.getenv("WEBAPP_URL", "http://127.0.0.1:8000")
 if not OPENROUTER_API_KEY:
     raise ValueError("OPENROUTER_API_KEY не найден. Проверь файл .env")
 
-# =========================
-# Папки
-# =========================
-
 DOWNLOADS_DIR = BASE_DIR / "downloads"
 DOWNLOADS_DIR.mkdir(exist_ok=True)
-
-# =========================
-# FastAPI
-# =========================
 
 app = FastAPI(title="DocCheck Mini App")
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
-# =========================
-# Главная страница Mini App
-# =========================
 
 @app.get("/")
 async def index(request: Request):
@@ -58,7 +48,7 @@ async def index(request: Request):
     )
 
 # =========================
-# Извлечение текста из документов
+# Извлечение текста
 # =========================
 
 def extract_text_from_pdf(file_path: Path) -> str:
@@ -76,16 +66,13 @@ def extract_text_from_pdf(file_path: Path) -> str:
 
 def extract_text_from_docx(file_path: Path) -> str:
     document = Document(str(file_path))
-
     text_parts = []
 
-    # Обычные абзацы
     for paragraph in document.paragraphs:
         text = paragraph.text.strip()
         if text:
             text_parts.append(text)
 
-    # Текст внутри таблиц
     for table in document.tables:
         for row in table.rows:
             row_text_parts = []
@@ -112,7 +99,7 @@ def limit_text(text: str, max_chars: int = 25000) -> str:
     return text[:max_chars] + "\n\n[Документ был обрезан из-за ограничения размера.]"
 
 # =========================
-# Работа с изображениями
+# Изображения
 # =========================
 
 def prepare_image_for_ai(input_path: Path) -> Path:
@@ -135,7 +122,6 @@ def prepare_image_for_ai(input_path: Path) -> Path:
         image = image.resize((new_width, new_height))
 
     image.save(output_path, format="JPEG", quality=85)
-
     return output_path
 
 
@@ -160,11 +146,9 @@ def convert_pdf_pages_to_images(pdf_path: Path, max_pages: int = 3) -> list[Path
 
         image_path = DOWNLOADS_DIR / f"{pdf_path.stem}_page_{page_index + 1}.jpg"
         pix.save(str(image_path))
-
         image_paths.append(image_path)
 
     pdf_document.close()
-
     return image_paths
 
 # =========================
@@ -176,9 +160,9 @@ SYSTEM_PROMPT_TEXT = """
 
 Твоя задача:
 - объяснять документы простым человеческим языком;
-- находить потенциально важные условия;
+- находить важные условия;
 - выделять возможные риски;
-- подсказывать, какие вопросы стоит задать перед подписанием.
+- подсказывать, какие вопросы стоит задать перед подписанием или перед отправкой документа второй стороне.
 
 Важно:
 - ты НЕ являешься юристом;
@@ -204,360 +188,207 @@ SYSTEM_PROMPT_IMAGE = """
 - объяснить его простым языком;
 - найти важные условия;
 - выделить возможные риски;
-- подготовить вопросы перед подписанием.
+- подготовить вопросы перед подписанием или перед отправкой документа второй стороне.
 
 Важно:
 - ты НЕ являешься юристом;
 - ты НЕ даёшь юридическую консультацию;
-- ты НЕ говоришь "подписывать можно" или "подписывать нельзя";
-- ты НЕ утверждаешь, что документ законный или незаконный;
 - если часть текста плохо видна, прямо скажи об этом;
-- не выдумывай условия, которых не видно на изображении;
-- если изображений несколько, воспринимай их как страницы одного документа.
+- не выдумывай условия, которых не видно на изображении.
 
 Стиль:
 - пиши по-русски;
 - понятно и структурировано;
-- без лишней воды;
-- используй осторожные формулировки: "стоит уточнить", "может быть риском", "обратите внимание".
+- без лишней воды.
 """
-
-# =========================
-# Типы анализа
-# =========================
 
 ANALYSIS_PROMPTS = {
-    "full": {
-        "title": "Полный анализ документа",
-        "instruction": """
-Сделай полный анализ документа строго в такой структуре:
+    "full": """
+Сделай полный анализ документа.
 
-1. Краткое содержание
-Коротко объясни, что это за документ и о чём он.
+Структура:
+1. 📌 Краткое содержание
+2. 🧾 Главные условия
+3. ✅ Сильные стороны
+4. ⚠️ Слабые стороны
+5. ❗ Возможные риски
+6. 🔍 На что обратить внимание
+7. ❓ Что стоит уточнить
+8. 🧠 Простое резюме
+9. Дисклеймер
+""",
 
-2. Главные условия
-Выдели самые важные условия:
-- деньги;
-- сроки;
-- обязанности сторон;
-- штрафы;
-- расторжение;
-- возврат денег, залога или аванса;
-- ответственность.
-
-3. Возможные риски
-Список потенциально рискованных или спорных пунктов.
-Если явных рисков нет, так и скажи, но добавь, что это не гарантия безопасности.
-
-4. Что стоит уточнить перед подписью
-Список конкретных вопросов, которые пользователь может задать второй стороне.
-
-5. Простое резюме
-Короткий итог человеческим языком.
-
-6. Дисклеймер
-Напомни, что это не юридическая консультация и при важных сделках лучше обратиться к специалисту.
-"""
-    },
-
-    "summary": {
-        "title": "Краткое резюме",
-        "instruction": """
+    "summary": """
 Сделай краткое резюме документа.
 
-Структура ответа:
-
+Структура:
 1. Что это за документ
-Объясни простыми словами.
-
 2. О чём документ
-Кратко опиши суть.
-
-3. Самые важные условия
-Выдели 5–7 главных пунктов.
-
+3. 5–7 самых важных условий
 4. Итог простыми словами
-Напиши короткий понятный вывод для обычного человека.
-"""
-    },
+""",
 
-    "strengths": {
-        "title": "Сильные стороны документа",
-        "instruction": """
+    "strengths": """
 Найди сильные стороны документа.
 
-Структура ответа:
-
+Структура:
 1. Что хорошо прописано
-Список сильных сторон.
-
 2. Какие условия выглядят понятными
-Отметь условия, которые сформулированы достаточно ясно.
-
 3. Что защищает интересы пользователя
-Если такие пункты есть, перечисли их.
-
 4. Короткий итог
-Сделай вывод, какие части документа выглядят наиболее проработанными.
-"""
-    },
+""",
 
-    "weaknesses": {
-        "title": "Слабые стороны документа",
-        "instruction": """
+    "weaknesses": """
 Найди слабые стороны документа.
 
-Структура ответа:
-
+Структура:
 1. Что прописано неясно
-Список неясных или размытых формулировок.
-
 2. Чего может не хватать
-Например: сроков, ответственности, порядка оплаты, возврата денег, расторжения, штрафов.
-
 3. Какие пункты стоит уточнить
-Конкретные пункты или темы.
-
 4. Короткий итог
-Объясни, какие слабые места могут быть важны для пользователя.
-"""
-    },
+""",
 
-    "risks": {
-        "title": "Риски документа",
-        "instruction": """
+    "risks": """
 Найди возможные риски в документе.
 
-Структура ответа:
-
+Структура:
 1. Основные риски
-Список потенциально рискованных условий.
-
-2. Уровень риска
-Для каждого риска укажи уровень:
-- низкий;
-- средний;
-- высокий.
-
+2. Уровень каждого риска: низкий / средний / высокий
 3. Почему это может быть проблемой
-Объясни простыми словами.
-
 4. Что уточнить или попросить изменить
-Дай практические вопросы или рекомендации для обсуждения.
+""",
 
-Важно: не утверждай, что документ незаконный. Используй осторожные формулировки.
-"""
-    },
-
-    "dates": {
-        "title": "Даты и сроки",
-        "instruction": """
+    "dates": """
 Найди все даты и сроки в документе.
 
-Структура ответа:
-
+Структура:
 1. Найденные даты
-Перечисли все конкретные даты.
-
 2. Найденные сроки
-Перечисли сроки: дни, месяцы, рабочие дни, периоды, дедлайны.
-
 3. Что означает каждая дата или срок
-Объясни назначение каждой даты.
+4. На какие сроки обратить особое внимание
+""",
 
-4. На какие сроки обратить внимание
-Выдели критичные сроки: оплата, выполнение работ, расторжение, претензии, возврат денег, штрафы.
+    "money": """
+Найди все финансовые условия.
 
-Если дат или сроков нет, прямо скажи об этом.
-"""
-    },
-
-    "money": {
-        "title": "Деньги и суммы",
-        "instruction": """
-Найди все финансовые условия в документе.
-
-Структура ответа:
-
+Структура:
 1. Найденные суммы
-Перечисли все суммы, цены, платежи, авансы, залоги, комиссии.
-
 2. Порядок оплаты
-Когда и как должна происходить оплата.
-
-3. Штрафы, пени, неустойки
-Если есть — перечисли.
-
+3. Штрафы, пени, комиссии
 4. Возвраты денег, аванса или залога
-Если есть условия возврата — объясни.
-
 5. Финансовые риски
-На что стоит обратить внимание.
+""",
 
-Если сумм нет, прямо скажи об этом.
-"""
-    },
-
-    "parties": {
-        "title": "Стороны документа",
-        "instruction": """
+    "parties": """
 Определи стороны документа.
 
-Структура ответа:
-
+Структура:
 1. Участники документа
-Кто является сторонами: заказчик, исполнитель, продавец, покупатель, арендодатель, арендатор и т.д.
-
 2. Данные сторон
-Если указаны: ФИО, название компании, ИНН, адрес, должность, представитель.
-
 3. Обязанности каждой стороны
-Кратко перечисли, что должна сделать каждая сторона.
-
 4. На что обратить внимание
-Отметь, если данных сторон не хватает или они указаны неполно.
-"""
-    },
+""",
 
-    "attention": {
-        "title": "На что обратить внимание",
-        "instruction": """
-Выдели пункты, на которые пользователю особенно стоит обратить внимание.
+    "attention": """
+Выдели пункты, на которые особенно стоит обратить внимание.
 
-Структура ответа:
-
+Структура:
 1. Самые важные пункты
-Список ключевых условий.
-
 2. Почему это важно
-Кратко объясни каждый пункт.
-
 3. Что может быть неприятным сюрпризом
-Отметь условия, которые пользователь может пропустить.
+4. Что проверить перед подписанием или отправкой
+""",
 
-4. Что проверить перед подписанием
-Практический чек-лист.
-"""
-    },
-
-    "simple": {
-        "title": "Простыми словами",
-        "instruction": """
+    "simple": """
 Объясни документ максимально простыми словами.
 
-Структура ответа:
-
+Структура:
 1. Если совсем коротко
-2–4 предложения о сути документа.
-
 2. Что от пользователя хотят
-Объясни обязательства пользователя.
-
 3. Что пользователь получает
-Объясни выгоду или результат.
-
 4. Где нужно быть осторожным
-Простыми словами перечисли важные моменты.
+""",
 
-Пиши без сложных юридических формулировок.
-"""
-    },
-
-    "fixes": {
-        "title": "Что исправить в документе",
-        "instruction": """
+    "fixes": """
 Предложи, что можно улучшить или исправить в документе.
 
-Структура ответа:
-
+Структура:
 1. Что желательно добавить
-Список недостающих условий.
-
 2. Что желательно уточнить
-Размытые или неполные пункты.
-
 3. Какие формулировки стоит сделать точнее
-Если возможно, приведи примеры.
-
 4. Что обсудить со второй стороной
-Практический список вопросов.
+""",
 
-Важно: не переписывай весь договор полностью, только укажи направления для улучшения.
-"""
-    },
+    "questions": """
+Составь список вопросов второй стороне.
 
-    "questions": {
-        "title": "Вопросы второй стороне",
-        "instruction": """
-Составь список вопросов, которые пользователь может задать второй стороне перед подписанием.
-
-Структура ответа:
-
+Структура:
 1. Вопросы по деньгам
 2. Вопросы по срокам
 3. Вопросы по обязанностям
 4. Вопросы по ответственности и штрафам
 5. Вопросы по расторжению и возвратам
 6. Дополнительные важные вопросы
+""",
 
-Формулируй вопросы простым языком.
-"""
-    },
+    "dangerous": """
+Найди потенциально опасные, спорные или размытые формулировки.
 
-    "dangerous": {
-        "title": "Опасные формулировки",
-        "instruction": """
-Найди потенциально опасные, спорные или слишком размытые формулировки.
-
-Структура ответа:
-
+Структура:
 1. Найденные формулировки
-Приведи цитаты или близкий пересказ.
-
 2. Почему они могут быть рискованными
-Объясни простыми словами.
-
 3. Как можно уточнить
-Предложи, что стоит спросить или попросить конкретизировать.
+""",
 
-Если опасных формулировок не найдено, прямо скажи об этом.
-"""
-    },
-
-    "score": {
-        "title": "Оценка документа",
-        "instruction": """
+    "score": """
 Оцени документ по понятности и рискам.
 
-Структура ответа:
+Структура:
+1. Общая оценка от 1 до 10
+2. Понятность: от 1 до 10
+3. Полнота условий: от 1 до 10
+4. Финансовая прозрачность: от 1 до 10
+5. Сроки: от 1 до 10
+6. Риски для пользователя: низкие / средние / высокие
+7. Что улучшить в первую очередь
+""",
 
-1. Общая оценка
-Поставь оценку от 1 до 10 и объясни почему.
-
-2. Оценка по критериям
-- Понятность: от 1 до 10
-- Полнота условий: от 1 до 10
-- Финансовая прозрачность: от 1 до 10
-- Сроки: от 1 до 10
-- Риски для пользователя: низкие / средние / высокие
-
-3. Главные плюсы
-4. Главные минусы
-5. Что улучшить в первую очередь
-
-Важно: оценка ориентировочная, это не юридическое заключение.
-"""
-    },
+    "custom": """
+Ответь на конкретный вопрос пользователя по документу.
+Используй только информацию из документа.
+Если ответа нет в документе — прямо скажи, что в тексте документа это не найдено.
+""",
 }
 
 
+def get_role_instruction(user_role: str) -> str:
+    if user_role == "author":
+        return """
+Контекст пользователя:
+Пользователь сам составляет или редактирует этот документ.
+
+Фокус анализа:
+- что стоит добавить;
+- что стоит уточнить;
+- какие формулировки сделать точнее;
+- как сделать документ понятнее;
+- какие вопросы могут возникнуть у второй стороны.
+"""
+
+    return """
+Контекст пользователя:
+Пользователь проверяет документ перед подписанием.
+
+Фокус анализа:
+- какие условия могут быть невыгодными;
+- какие риски есть для пользователя;
+- что важно уточнить перед подписью;
+- какие пункты могут повлиять на деньги, сроки и ответственность.
+"""
+
+
 def get_analysis_instruction(analysis_type: str) -> str:
-    analysis = ANALYSIS_PROMPTS.get(analysis_type)
-
-    if not analysis:
-        analysis = ANALYSIS_PROMPTS["full"]
-
-    return analysis["instruction"].strip()
+    return ANALYSIS_PROMPTS.get(analysis_type, ANALYSIS_PROMPTS["full"]).strip()
 
 
 def call_openrouter(payload: dict, timeout: int = 240) -> str:
@@ -578,9 +409,7 @@ def call_openrouter(payload: dict, timeout: int = 240) -> str:
     )
 
     if response.status_code != 200:
-        raise Exception(
-            f"OpenRouter API error {response.status_code}: {response.text}"
-        )
+        raise Exception(f"OpenRouter API error {response.status_code}: {response.text}")
 
     data = response.json()
 
@@ -589,13 +418,37 @@ def call_openrouter(payload: dict, timeout: int = 240) -> str:
     except Exception:
         raise Exception(f"Неожиданный ответ от OpenRouter: {data}")
 
+# =========================
+# Анализ одного документа
+# =========================
 
-def analyze_document_text_with_ai(document_text: str, analysis_type: str = "full") -> str:
+def analyze_document_text_with_ai(
+    document_text: str,
+    analysis_type: str = "full",
+    user_role: str = "signer",
+    custom_question: str = "",
+) -> str:
     document_text = limit_text(document_text)
+    role_instruction = get_role_instruction(user_role)
     analysis_instruction = get_analysis_instruction(analysis_type)
 
-    user_prompt = f"""
-Проанализируй документ ниже.
+    if analysis_type == "custom":
+        user_prompt = f"""
+{role_instruction}
+
+Пользователь задал вопрос:
+{custom_question}
+
+Ответь на вопрос по документу.
+Если в документе нет информации для ответа — так и скажи.
+
+Текст документа:
+
+{document_text}
+"""
+    else:
+        user_prompt = f"""
+{role_instruction}
 
 Задача анализа:
 {analysis_instruction}
@@ -608,24 +461,42 @@ def analyze_document_text_with_ai(document_text: str, analysis_type: str = "full
     payload = {
         "model": OPENROUTER_MODEL,
         "messages": [
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT_TEXT.strip(),
-            },
-            {
-                "role": "user",
-                "content": user_prompt.strip(),
-            },
+            {"role": "system", "content": SYSTEM_PROMPT_TEXT.strip()},
+            {"role": "user", "content": user_prompt.strip()},
         ],
         "temperature": 0.2,
-        "max_tokens": 3000,
+        "max_tokens": 3500,
     }
 
     return call_openrouter(payload)
 
 
-def analyze_document_images_with_ai(image_paths: list[Path], analysis_type: str = "full") -> str:
+def analyze_document_images_with_ai(
+    image_paths: list[Path],
+    analysis_type: str = "full",
+    user_role: str = "signer",
+    custom_question: str = "",
+) -> str:
+    role_instruction = get_role_instruction(user_role)
     analysis_instruction = get_analysis_instruction(analysis_type)
+
+    if analysis_type == "custom":
+        task_text = f"""
+{role_instruction}
+
+Пользователь задал вопрос:
+{custom_question}
+
+Ответь на вопрос по документу на изображении.
+Если в документе нет информации для ответа — прямо скажи об этом.
+"""
+    else:
+        task_text = f"""
+{role_instruction}
+
+Задача анализа:
+{analysis_instruction}
+"""
 
     content = [
         {
@@ -635,97 +506,298 @@ def analyze_document_images_with_ai(image_paths: list[Path], analysis_type: str 
 
 Сначала внимательно прочитай видимый текст.
 Если страниц несколько, учитывай их как один документ.
+Если часть текста плохо видна — прямо скажи об этом.
+Не выдумывай условия, которых не видно.
 
-Если часть текста плохо видна или неразборчива — прямо скажи об этом.
-Не выдумывай условия, которых не видно на изображении.
-
-Задача анализа:
-{analysis_instruction}
+{task_text}
 """.strip(),
         }
     ]
 
     for image_path in image_paths:
-        image_data_url = image_to_data_url(image_path)
-
         content.append(
             {
                 "type": "image_url",
-                "image_url": {
-                    "url": image_data_url,
-                },
+                "image_url": {"url": image_to_data_url(image_path)},
             }
         )
 
     payload = {
         "model": OPENROUTER_MODEL,
         "messages": [
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT_IMAGE.strip(),
-            },
-            {
-                "role": "user",
-                "content": content,
-            },
+            {"role": "system", "content": SYSTEM_PROMPT_IMAGE.strip()},
+            {"role": "user", "content": content},
         ],
         "temperature": 0.2,
-        "max_tokens": 3000,
+        "max_tokens": 3500,
     }
 
     return call_openrouter(payload, timeout=240)
 
 # =========================
-# API загрузки файла
+# Подготовка файлов
+# =========================
+
+ALLOWED_EXTENSIONS = [
+    ".pdf",
+    ".docx",
+    ".txt",
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".webp",
+]
+
+IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"]
+
+
+async def save_upload_file(file: UploadFile) -> tuple[Path, str]:
+    original_name = Path(file.filename or "document").name
+    file_extension = Path(original_name).suffix.lower()
+
+    if file_extension not in ALLOWED_EXTENSIONS:
+        raise ValueError("Неподдерживаемый формат файла. Можно загрузить PDF, DOCX, TXT, JPG, PNG или WEBP.")
+
+    safe_name = original_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+    local_file_path = DOWNLOADS_DIR / f"{uuid.uuid4().hex}_{safe_name}"
+
+    file_bytes = await file.read()
+
+    with open(local_file_path, "wb") as f:
+        f.write(file_bytes)
+
+    return local_file_path, file_extension
+
+
+def extract_document_content(local_file_path: Path, file_extension: str) -> dict:
+    if file_extension in IMAGE_EXTENSIONS:
+        return {
+            "kind": "images",
+            "images": [local_file_path],
+        }
+
+    if file_extension == ".txt":
+        extracted_text = extract_text_from_txt(local_file_path)
+
+        if not extracted_text:
+            raise ValueError("TXT-файл пустой или текст не удалось прочитать.")
+
+        return {
+            "kind": "text",
+            "text": extracted_text,
+        }
+
+    if file_extension == ".docx":
+        extracted_text = extract_text_from_docx(local_file_path)
+
+        if not extracted_text:
+            raise ValueError(
+                "DOCX получен, но внутри не найден редактируемый текст. Возможно, документ содержит скан или картинку."
+            )
+
+        return {
+            "kind": "text",
+            "text": extracted_text,
+        }
+
+    if file_extension == ".pdf":
+        extracted_text = extract_text_from_pdf(local_file_path)
+
+        if extracted_text:
+            return {
+                "kind": "text",
+                "text": extracted_text,
+            }
+
+        image_paths = convert_pdf_pages_to_images(local_file_path, max_pages=3)
+
+        if not image_paths:
+            raise ValueError("PDF не содержит текста, и его не удалось преобразовать в изображения.")
+
+        return {
+            "kind": "images",
+            "images": image_paths,
+        }
+
+    raise ValueError("Файл не удалось обработать.")
+
+# =========================
+# Сравнение документов
+# =========================
+
+def compare_documents_with_ai(
+    first_content: dict,
+    second_content: dict,
+    user_role: str = "signer",
+) -> str:
+    role_instruction = get_role_instruction(user_role)
+
+    compare_instruction = f"""
+{role_instruction}
+
+Сравни два документа.
+
+Структура ответа:
+1. 📌 Краткий вывод
+Коротко объясни, похожи документы или отличаются существенно.
+
+2. 🔄 Главные отличия
+Перечисли самые важные отличия.
+
+3. 💰 Отличия по деньгам
+Если есть суммы, платежи, штрафы, комиссии — сравни их.
+
+4. 📅 Отличия по срокам
+Сравни даты, сроки, дедлайны, периоды действия.
+
+5. ⚠️ Что стало рискованнее
+Покажи условия, которые во втором документе могут быть хуже или опаснее.
+
+6. ✅ Что стало лучше
+Покажи условия, которые стали понятнее или выгоднее.
+
+7. ❓ Что уточнить перед подписанием
+Список вопросов второй стороне.
+
+8. 🧠 Простое резюме
+Коротко объясни обычным языком, на что обратить внимание.
+
+Важно:
+- если документы плохо читаются, скажи об этом;
+- не выдумывай отличия;
+- если сравнение неполное из-за качества файла, предупреди пользователя.
+"""
+
+    # Если оба документа текстовые — отправляем как обычный текст
+    if first_content["kind"] == "text" and second_content["kind"] == "text":
+        user_prompt = f"""
+{compare_instruction}
+
+Документ 1:
+
+{limit_text(first_content["text"], 18000)}
+
+Документ 2:
+
+{limit_text(second_content["text"], 18000)}
+"""
+
+        payload = {
+            "model": OPENROUTER_MODEL,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT_TEXT.strip()},
+                {"role": "user", "content": user_prompt.strip()},
+            ],
+            "temperature": 0.2,
+            "max_tokens": 4000,
+        }
+
+        return call_openrouter(payload, timeout=240)
+
+    # Если хотя бы один документ — изображение/скан
+    content = [
+        {
+            "type": "text",
+            "text": compare_instruction.strip(),
+        }
+    ]
+
+    if first_content["kind"] == "text":
+        content.append(
+            {
+                "type": "text",
+                "text": f"Документ 1, текст:\n\n{limit_text(first_content['text'], 14000)}",
+            }
+        )
+    else:
+        content.append({"type": "text", "text": "Документ 1, изображения:"})
+        for image_path in first_content["images"]:
+            content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": image_to_data_url(image_path)},
+                }
+            )
+
+    if second_content["kind"] == "text":
+        content.append(
+            {
+                "type": "text",
+                "text": f"Документ 2, текст:\n\n{limit_text(second_content['text'], 14000)}",
+            }
+        )
+    else:
+        content.append({"type": "text", "text": "Документ 2, изображения:"})
+        for image_path in second_content["images"]:
+            content.append(
+                {
+                    "type": "image_url",
+                    "image_url": {"url": image_to_data_url(image_path)},
+                }
+            )
+
+    payload = {
+        "model": OPENROUTER_MODEL,
+        "messages": [
+            {"role": "system", "content": SYSTEM_PROMPT_IMAGE.strip()},
+            {"role": "user", "content": content},
+        ],
+        "temperature": 0.2,
+        "max_tokens": 4000,
+    }
+
+    return call_openrouter(payload, timeout=240)
+
+# =========================
+# API
 # =========================
 
 @app.post("/api/analyze")
 async def analyze_file(
     file: UploadFile = File(...),
+    file2: Optional[UploadFile] = File(None),
     analysis_type: str = Form("full"),
+    user_role: str = Form("signer"),
+    custom_question: str = Form(""),
 ):
     try:
-        original_name = file.filename or "document"
-        file_extension = Path(original_name).suffix.lower()
+        if user_role not in ["signer", "author"]:
+            user_role = "signer"
 
-        allowed_extensions = [
-            ".pdf",
-            ".docx",
-            ".txt",
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".webp",
-        ]
+        if analysis_type not in ANALYSIS_PROMPTS and analysis_type != "compare":
+            analysis_type = "full"
 
-        if file_extension not in allowed_extensions:
+        if analysis_type == "custom" and not custom_question.strip():
             return JSONResponse(
                 status_code=400,
                 content={
                     "ok": False,
-                    "error": "Неподдерживаемый формат файла. Можно загрузить PDF, DOCX, TXT, JPG, PNG или WEBP.",
+                    "error": "Введите свой вопрос по документу.",
                 },
             )
 
-        if analysis_type not in ANALYSIS_PROMPTS:
-            analysis_type = "full"
+        first_file_path, first_extension = await save_upload_file(file)
+        first_content = extract_document_content(first_file_path, first_extension)
 
-        safe_name = original_name.replace(" ", "_")
-        local_file_path = DOWNLOADS_DIR / safe_name
+        # Сравнение двух документов
+        if analysis_type == "compare":
+            if file2 is None:
+                return JSONResponse(
+                    status_code=400,
+                    content={
+                        "ok": False,
+                        "error": "Для сравнения нужно загрузить второй документ.",
+                    },
+                )
 
-        file_bytes = await file.read()
+            second_file_path, second_extension = await save_upload_file(file2)
+            second_content = extract_document_content(second_file_path, second_extension)
 
-        with open(local_file_path, "wb") as f:
-            f.write(file_bytes)
-
-        image_extensions = [".jpg", ".jpeg", ".png", ".webp"]
-
-        # Картинка
-        if file_extension in image_extensions:
             result = await asyncio.to_thread(
-                analyze_document_images_with_ai,
-                [local_file_path],
-                analysis_type,
+                compare_documents_with_ai,
+                first_content,
+                second_content,
+                user_role,
             )
 
             return {
@@ -734,23 +806,14 @@ async def analyze_file(
                 "result": result,
             }
 
-        # TXT
-        if file_extension == ".txt":
-            extracted_text = extract_text_from_txt(local_file_path)
-
-            if not extracted_text:
-                return JSONResponse(
-                    status_code=400,
-                    content={
-                        "ok": False,
-                        "error": "TXT-файл пустой или текст не удалось прочитать.",
-                    },
-                )
-
+        # Обычный анализ одного документа
+        if first_content["kind"] == "text":
             result = await asyncio.to_thread(
                 analyze_document_text_with_ai,
-                extracted_text,
+                first_content["text"],
                 analysis_type,
+                user_role,
+                custom_question.strip(),
             )
 
             return {
@@ -759,64 +822,13 @@ async def analyze_file(
                 "result": result,
             }
 
-        # DOCX
-        if file_extension == ".docx":
-            extracted_text = extract_text_from_docx(local_file_path)
-
-            if not extracted_text:
-                return JSONResponse(
-                    status_code=400,
-                    content={
-                        "ok": False,
-                        "error": "DOCX получен, но внутри не найден редактируемый текст. Возможно, документ содержит скан или картинку. Пока загрузите этот документ как PDF, TXT, JPG или PNG.",
-                    },
-                )
-
-            result = await asyncio.to_thread(
-                analyze_document_text_with_ai,
-                extracted_text,
-                analysis_type,
-            )
-
-            return {
-                "ok": True,
-                "analysis_type": analysis_type,
-                "result": result,
-            }
-
-        # PDF
-        if file_extension == ".pdf":
-            extracted_text = extract_text_from_pdf(local_file_path)
-
-            if extracted_text:
-                result = await asyncio.to_thread(
-                    analyze_document_text_with_ai,
-                    extracted_text,
-                    analysis_type,
-                )
-
-                return {
-                    "ok": True,
-                    "analysis_type": analysis_type,
-                    "result": result,
-                }
-
-            # Если PDF сканированный
-            image_paths = convert_pdf_pages_to_images(local_file_path, max_pages=3)
-
-            if not image_paths:
-                return JSONResponse(
-                    status_code=400,
-                    content={
-                        "ok": False,
-                        "error": "PDF не содержит текста, и его не удалось преобразовать в изображения.",
-                    },
-                )
-
+        if first_content["kind"] == "images":
             result = await asyncio.to_thread(
                 analyze_document_images_with_ai,
-                image_paths,
+                first_content["images"],
                 analysis_type,
+                user_role,
+                custom_question.strip(),
             )
 
             return {
