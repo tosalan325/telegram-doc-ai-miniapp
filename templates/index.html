@@ -2,45 +2,79 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+
     <title>DocCheck AI</title>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <link rel="stylesheet" href="/static/style.css?v=6">
+    <link
+        rel="stylesheet"
+        href="/static/style.css?v=8"
+    >
 </head>
+
 <body>
     <div class="app">
         <header class="header">
-            <div class="badge">AI Document Checker</div>
+            <div class="badge">
+                AI Document Checker
+            </div>
 
             <h1>Проверка документа</h1>
 
             <p>
-                Загрузите договор, PDF, фото или скан — AI поможет быстро понять главное.
+                Загрузите документ и выберите, что именно
+                нужно проверить.
             </p>
         </header>
 
         <main class="card">
+            <!-- Режим пользователя -->
             <section class="role-panel">
-                <div class="section-title">Выберите ситуацию</div>
+                <div class="section-title">
+                    Ваша ситуация
+                </div>
 
                 <div class="role-grid">
-                    <button id="signerRoleButton" class="role-button active" data-role="signer">
-                        🔎 Проверяю<br>перед подписью
+                    <button
+                        class="role-button active"
+                        data-role="signer"
+                        type="button"
+                        aria-pressed="true"
+                    >
+                        🔎 Проверяю<br>
+                        перед подписью
                     </button>
 
-                    <button id="authorRoleButton" class="role-button" data-role="author">
-                        ✍️ Составляю<br>документ
+                    <button
+                        class="role-button"
+                        data-role="author"
+                        type="button"
+                        aria-pressed="false"
+                    >
+                        ✍️ Составляю<br>
+                        документ
                     </button>
                 </div>
             </section>
 
             <section class="upload-section">
-                <label class="file-label" for="fileInput">
+                <!-- Первый файл -->
+                <label
+                    class="file-label"
+                    for="fileInput"
+                >
                     <span class="file-icon">📄</span>
-                    <span class="file-title">Выбрать документ</span>
+
+                    <span class="file-title">
+                        Выбрать документ
+                    </span>
+
                     <span class="file-subtitle">
                         PDF, DOCX, TXT, JPG, PNG, WEBP
                     </span>
@@ -52,16 +86,30 @@
                     accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp"
                 >
 
-                <div id="fileName" class="file-name">
+                <div
+                    id="fileName"
+                    class="file-name"
+                >
                     Файл не выбран
                 </div>
 
-                <div id="compareBox" class="compare-box hidden">
-                    <label class="file-label second-file" for="fileInput2">
+                <!-- Второй файл для сравнения -->
+                <div
+                    id="compareBox"
+                    class="compare-box hidden"
+                >
+                    <label
+                        class="file-label second-file"
+                        for="fileInput2"
+                    >
                         <span class="file-icon">📑</span>
-                        <span class="file-title">Выбрать второй документ</span>
+
+                        <span class="file-title">
+                            Выбрать второй документ
+                        </span>
+
                         <span class="file-subtitle">
-                            Для сравнения с первым файлом
+                            Он будет сравниваться с первым
                         </span>
                     </label>
 
@@ -71,110 +119,266 @@
                         accept=".pdf,.docx,.txt,.jpg,.jpeg,.png,.webp"
                     >
 
-                    <div id="fileName2" class="file-name">
+                    <div
+                        id="fileName2"
+                        class="file-name"
+                    >
                         Второй файл не выбран
                     </div>
                 </div>
 
-                <div id="analysisPanel" class="analysis-panel">
-                    <div class="section-title">Что хотите узнать?</div>
+                <!-- Кнопки анализа -->
+                <div class="analysis-panel">
+                    <div class="section-title">
+                        Что хотите узнать?
+                    </div>
+
+                    <div class="analysis-hint">
+                        Можно выбрать несколько вариантов.
+                        Повторное нажатие снимает выбор.
+                    </div>
 
                     <div class="analysis-grid">
-                        <button class="analysis-button active" data-type="full">
-                            🧾 Полный<br>анализ
+                        <button
+                            class="analysis-button active"
+                            data-type="full"
+                            data-tooltip="Кратко покажет суть, главные условия, риски и вопросы."
+                            type="button"
+                            aria-pressed="true"
+                        >
+                            🧾 Полный<br>
+                            анализ
                         </button>
 
-                        <button class="analysis-button" data-type="summary">
-                            📄 Краткое<br>резюме
+                        <button
+                            class="analysis-button"
+                            data-type="summary"
+                            data-tooltip="В нескольких предложениях объяснит, что это за документ."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            📄 Краткое<br>
+                            резюме
                         </button>
 
-                        <button class="analysis-button" data-type="strengths">
-                            ✅ Сильные<br>стороны
+                        <button
+                            class="analysis-button"
+                            data-type="strengths"
+                            data-tooltip="Покажет условия, которые сформулированы хорошо и понятно."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            ✅ Сильные<br>
+                            стороны
                         </button>
 
-                        <button class="analysis-button" data-type="weaknesses">
-                            ⚠️ Слабые<br>стороны
+                        <button
+                            class="analysis-button"
+                            data-type="weaknesses"
+                            data-tooltip="Найдёт неясные, неполные или отсутствующие условия."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            ⚠️ Слабые<br>
+                            стороны
                         </button>
 
-                        <button class="analysis-button" data-type="risks">
-                            ❗ Риски<br>документа
+                        <button
+                            class="analysis-button"
+                            data-type="risks"
+                            data-tooltip="Найдёт возможные риски и укажет уровень каждого риска."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            ❗ Риски<br>
+                            документа
                         </button>
 
-                        <button class="analysis-button" data-type="dates">
-                            📅 Даты<br>и сроки
+                        <button
+                            class="analysis-button"
+                            data-type="dates"
+                            data-tooltip="Найдёт даты, сроки, периоды и важные дедлайны."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            📅 Даты<br>
+                            и сроки
                         </button>
 
-                        <button class="analysis-button" data-type="money">
-                            💰 Деньги<br>и суммы
+                        <button
+                            class="analysis-button"
+                            data-type="money"
+                            data-tooltip="Найдёт суммы, платежи, авансы, штрафы и комиссии."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            💰 Деньги<br>
+                            и суммы
                         </button>
 
-                        <button class="analysis-button" data-type="parties">
-                            👥 Стороны<br>документа
+                        <button
+                            class="analysis-button"
+                            data-type="parties"
+                            data-tooltip="Определит участников документа и их обязанности."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            👥 Стороны<br>
+                            документа
                         </button>
 
-                        <button class="analysis-button" data-type="attention">
-                            🔍 Важные<br>пункты
+                        <button
+                            class="analysis-button"
+                            data-type="attention"
+                            data-tooltip="Покажет самые важные условия, которые легко пропустить."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            🔍 Важные<br>
+                            пункты
                         </button>
 
-                        <button class="analysis-button" data-type="simple">
-                            🧠 Простыми<br>словами
+                        <button
+                            class="analysis-button"
+                            data-type="simple"
+                            data-tooltip="Объяснит содержание без сложных юридических выражений."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            🧠 Простыми<br>
+                            словами
                         </button>
 
-                        <button class="analysis-button" data-type="fixes">
-                            ✍️ Что<br>исправить
+                        <button
+                            class="analysis-button"
+                            data-type="fixes"
+                            data-tooltip="Предложит, что нужно добавить, изменить или уточнить."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            ✍️ Что<br>
+                            исправить
                         </button>
 
-                        <button class="analysis-button" data-type="questions">
-                            ❓ Вопросы<br>стороне
+                        <button
+                            class="analysis-button"
+                            data-type="questions"
+                            data-tooltip="Подготовит короткий список вопросов второй стороне."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            ❓ Вопросы<br>
+                            стороне
                         </button>
 
-                        <button class="analysis-button" data-type="dangerous">
-                            🟥 Опасные<br>фразы
+                        <button
+                            class="analysis-button"
+                            data-type="dangerous"
+                            data-tooltip="Найдёт размытые, спорные и потенциально опасные фразы."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            🟥 Опасные<br>
+                            фразы
                         </button>
 
-                        <button class="analysis-button" data-type="score">
-                            📊 Оценка<br>документа
+                        <button
+                            class="analysis-button"
+                            data-type="score"
+                            data-tooltip="Кратко оценит понятность, полноту и общий уровень риска."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            📊 Оценка<br>
+                            документа
                         </button>
 
-                        <button class="analysis-button wide" data-type="custom">
-                            💬 Свой<br>вопрос
+                        <button
+                            class="analysis-button"
+                            data-type="custom"
+                            data-tooltip="Позволит задать собственный вопрос по документу."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            💬 Свой<br>
+                            вопрос
                         </button>
 
-                        <button class="analysis-button wide" data-type="compare">
-                            🔄 Сравнить<br>документы
+                        <button
+                            class="analysis-button"
+                            data-type="compare"
+                            data-tooltip="Сравнит два документа и покажет основные изменения."
+                            type="button"
+                            aria-pressed="false"
+                        >
+                            🔄 Сравнить<br>
+                            документы
                         </button>
                     </div>
                 </div>
 
-                <div id="customQuestionBox" class="custom-question-box hidden">
-                    <label class="section-title" for="customQuestion">
+                <!-- Собственный вопрос -->
+                <div
+                    id="customQuestionBox"
+                    class="custom-question-box hidden"
+                >
+                    <label
+                        class="section-title"
+                        for="customQuestion"
+                    >
                         Ваш вопрос по документу
                     </label>
 
                     <textarea
                         id="customQuestion"
                         rows="3"
-                        placeholder="Например: можно ли вернуть аванс? Что будет, если нарушить срок?"
+                        maxlength="1000"
+                        placeholder="Например: можно ли вернуть аванс?"
                     ></textarea>
                 </div>
 
-                <button id="analyzeButton" class="button" disabled>
+                <!-- Основная кнопка -->
+                <button
+                    id="analyzeButton"
+                    class="button"
+                    type="button"
+                    disabled
+                >
                     Сначала выберите документ
                 </button>
             </section>
 
-            <section id="statusBox" class="status hidden">
+            <!-- Статус -->
+            <section
+                id="statusBox"
+                class="status hidden"
+            >
                 <div class="loader"></div>
-                <span id="statusText">Обрабатываю документ...</span>
+
+                <span id="statusText">
+                    Обрабатываю документ...
+                </span>
             </section>
 
-            <section id="errorBox" class="error hidden"></section>
+            <!-- Ошибка -->
+            <section
+                id="errorBox"
+                class="error hidden"
+            ></section>
 
-            <section id="resultBox" class="result hidden">
+            <!-- Результат -->
+            <section
+                id="resultBox"
+                class="result hidden"
+            >
                 <div class="result-header">
                     <h2>Результат</h2>
 
-                    <button id="copyButton" class="copy-button" type="button">
+                    <button
+                        id="copyButton"
+                        class="copy-button"
+                        type="button"
+                    >
                         📋 Скопировать
                     </button>
                 </div>
@@ -182,26 +386,37 @@
                 <div id="resultText"></div>
             </section>
 
-            <section id="historyBox" class="history hidden">
+            <!-- История -->
+            <section
+                id="historyBox"
+                class="history hidden"
+            >
                 <div class="history-header">
                     <h2>История проверок</h2>
 
-                    <button id="clearHistoryButton" class="clear-history-button" type="button">
+                    <button
+                        id="clearHistoryButton"
+                        class="clear-history-button"
+                        type="button"
+                    >
                         Очистить
                     </button>
                 </div>
 
-                <div id="historyList" class="history-list"></div>
+                <div
+                    id="historyList"
+                    class="history-list"
+                ></div>
             </section>
         </main>
 
         <footer class="footer">
-            <p>
-                Это не юридическая консультация. Для важных сделок лучше обратиться к специалисту.
-            </p>
+            Это информационный сервис, а не юридическая
+            консультация. Для важных сделок лучше обратиться
+            к специалисту.
         </footer>
     </div>
 
-    <script src="/static/app.js?v=6"></script>
+    <script src="/static/app.js?v=8"></script>
 </body>
 </html>

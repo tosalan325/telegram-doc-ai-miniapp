@@ -3,7 +3,7 @@
 }
 
 :root {
-    --bg: #0f172a;
+    --bg: #020617;
     --card: #111827;
     --card-light: #1f2937;
     --text: #f9fafb;
@@ -15,14 +15,43 @@
     --border: rgba(255, 255, 255, 0.12);
 }
 
+html {
+    color-scheme: dark;
+}
+
 body {
     margin: 0;
     min-height: 100vh;
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+
     background:
-        radial-gradient(circle at top, rgba(56, 189, 248, 0.16), transparent 34%),
-        linear-gradient(180deg, #020617, #0f172a);
+        radial-gradient(
+            circle at top,
+            rgba(56, 189, 248, 0.16),
+            transparent 34%
+        ),
+        linear-gradient(
+            180deg,
+            #020617,
+            #0f172a
+        );
+
     color: var(--text);
+}
+
+button,
+textarea {
+    font: inherit;
+}
+
+button {
+    -webkit-tap-highlight-color: transparent;
 }
 
 .app {
@@ -32,6 +61,10 @@ body {
     padding: 18px 14px 30px;
 }
 
+/* =========================
+   Шапка
+========================= */
+
 .header {
     margin-bottom: 14px;
 }
@@ -39,13 +72,18 @@ body {
 .badge {
     display: inline-flex;
     padding: 5px 9px;
+    margin-bottom: 9px;
+
+    border: 1px solid
+        rgba(56, 189, 248, 0.25);
     border-radius: 999px;
-    background: rgba(56, 189, 248, 0.12);
+
+    background:
+        rgba(56, 189, 248, 0.12);
+
     color: var(--accent);
     font-size: 12px;
     font-weight: 650;
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    margin-bottom: 9px;
 }
 
 h1 {
@@ -56,17 +94,29 @@ h1 {
 
 .header p {
     margin: 0;
+
     color: var(--muted);
     font-size: 14px;
     line-height: 1.4;
 }
 
+/* =========================
+   Основная карточка
+========================= */
+
 .card {
-    background: rgba(17, 24, 39, 0.92);
+    padding: 14px;
+
     border: 1px solid var(--border);
     border-radius: 22px;
-    padding: 14px;
-    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.35);
+
+    background:
+        rgba(17, 24, 39, 0.92);
+
+    box-shadow:
+        0 24px 80px
+        rgba(0, 0, 0, 0.35);
+
     backdrop-filter: blur(12px);
 }
 
@@ -87,10 +137,15 @@ h1 {
     font-weight: 750;
 }
 
+/* =========================
+   Кнопки режимов
+========================= */
+
 .role-grid,
 .analysis-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
@@ -98,31 +153,44 @@ h1 {
 .analysis-button {
     width: 100%;
     min-width: 0;
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.12);
     border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    background: rgba(31, 41, 55, 0.86);
+
+    background:
+        rgba(31, 41, 55, 0.86);
+
     color: #e5e7eb;
-    font-family: inherit;
+
     cursor: pointer;
-    transition: 0.18s ease;
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease,
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+
     text-align: left;
     white-space: normal;
     overflow-wrap: anywhere;
-    -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
 .role-button {
     min-height: 54px;
     padding: 10px 11px;
+
     font-size: 13px;
     font-weight: 750;
     line-height: 1.25;
 }
 
 .analysis-button {
-    min-height: 54px;
+    position: relative;
+
+    min-height: 56px;
     padding: 9px 10px;
+
     font-size: 13px;
     font-weight: 750;
     line-height: 1.22;
@@ -130,48 +198,205 @@ h1 {
 
 .role-button:hover:not(:disabled),
 .analysis-button:hover:not(:disabled) {
-    border-color: rgba(56, 189, 248, 0.65);
-    background: rgba(56, 189, 248, 0.10);
+    border-color:
+        rgba(56, 189, 248, 0.65);
+
+    background:
+        rgba(56, 189, 248, 0.10);
+
     transform: translateY(-1px);
+}
+
+.role-button:active:not(:disabled),
+.analysis-button:active:not(:disabled) {
+    transform: scale(0.98);
 }
 
 .role-button.active,
 .analysis-button.active {
-    color: white;
-    border-color: rgba(56, 189, 248, 0.95);
-    background: linear-gradient(
-        135deg,
-        rgba(56, 189, 248, 0.34),
-        rgba(2, 132, 199, 0.22)
-    );
-    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.12);
+    color: #ffffff;
+
+    border-color:
+        rgba(56, 189, 248, 0.95);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(56, 189, 248, 0.34),
+            rgba(2, 132, 199, 0.22)
+        );
+
+    box-shadow:
+        inset 0 0 0 1px
+        rgba(56, 189, 248, 0.12),
+        0 7px 20px
+        rgba(56, 189, 248, 0.08);
+}
+
+.analysis-button.active {
+    padding-right: 28px;
+}
+
+/* Галочка выбранной кнопки */
+.analysis-button.active > br:first-of-type {
+    display: initial;
+}
+
+.analysis-button.active::selection {
+    background: transparent;
+}
+
+/* Отдельная галочка выбора */
+.analysis-button.active {
+    background-image:
+        linear-gradient(
+            135deg,
+            rgba(56, 189, 248, 0.34),
+            rgba(2, 132, 199, 0.22)
+        );
 }
 
 .role-button:disabled,
 .analysis-button:disabled {
-    opacity: 0.55;
+    opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* =========================
+   Подсказки
+========================= */
+
+.analysis-hint {
+    margin: -3px 0 9px;
+
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.35;
+}
+
+.analysis-button::after {
+    content: attr(data-tooltip);
+
+    position: absolute;
+    z-index: 1000;
+
+    left: 50%;
+    bottom: calc(100% + 10px);
+
+    width: max-content;
+    max-width: 245px;
+    padding: 8px 10px;
+
+    border: 1px solid
+        rgba(56, 189, 248, 0.32);
+    border-radius: 10px;
+
+    background: #020617;
+    color: #e5e7eb;
+
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 1.4;
+    text-align: left;
+
+    box-shadow:
+        0 12px 30px
+        rgba(0, 0, 0, 0.48);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transform:
+        translate(-50%, 5px);
+
+    transition:
+        opacity 0.16s ease,
+        visibility 0.16s ease,
+        transform 0.16s ease;
+}
+
+.analysis-button::before {
+    content: "";
+
+    position: absolute;
+    z-index: 1001;
+
+    left: 50%;
+    bottom: calc(100% + 4px);
+
+    width: 10px;
+    height: 10px;
+
+    background: #020617;
+
+    border-right: 1px solid
+        rgba(56, 189, 248, 0.32);
+    border-bottom: 1px solid
+        rgba(56, 189, 248, 0.32);
+
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+
+    transform:
+        translateX(-50%)
+        rotate(45deg);
+
+    transition:
+        opacity 0.16s ease,
+        visibility 0.16s ease;
+}
+
+.analysis-button:hover::after,
+.analysis-button:focus-visible::after {
+    opacity: 1;
+    visibility: visible;
+
+    transform:
+        translate(-50%, 0);
+}
+
+.analysis-button:hover::before,
+.analysis-button:focus-visible::before {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* =========================
+   Выбор файла
+========================= */
 
 .file-label {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+
     gap: 5px;
     min-height: 118px;
     padding: 14px;
-    border: 1.5px dashed rgba(156, 163, 175, 0.58);
+
+    border: 1.5px dashed
+        rgba(156, 163, 175, 0.58);
     border-radius: 18px;
-    background: rgba(31, 41, 55, 0.62);
+
+    background:
+        rgba(31, 41, 55, 0.62);
+
     cursor: pointer;
     text-align: center;
-    transition: 0.2s ease;
+
+    transition:
+        border-color 0.2s ease,
+        background 0.2s ease;
 }
 
 .file-label:hover {
     border-color: var(--accent);
-    background: rgba(56, 189, 248, 0.08);
+
+    background:
+        rgba(56, 189, 248, 0.08);
 }
 
 .second-file {
@@ -189,8 +414,8 @@ h1 {
 }
 
 .file-subtitle {
-    font-size: 12px;
     color: var(--muted);
+    font-size: 12px;
 }
 
 input[type="file"] {
@@ -199,31 +424,53 @@ input[type="file"] {
 
 .file-name {
     padding: 10px 12px;
-    border-radius: 13px;
-    background: rgba(15, 23, 42, 0.65);
+
     border: 1px solid var(--border);
+    border-radius: 13px;
+
+    background:
+        rgba(15, 23, 42, 0.65);
+
     color: var(--muted);
     font-size: 13px;
     line-height: 1.4;
+
     word-break: break-word;
     overflow-wrap: anywhere;
 }
 
 .file-name.selected {
-    background: rgba(52, 211, 153, 0.10);
-    border-color: rgba(52, 211, 153, 0.45);
+    border-color:
+        rgba(52, 211, 153, 0.45);
+
+    background:
+        rgba(52, 211, 153, 0.10);
+
     color: #d1fae5;
     font-weight: 650;
 }
+
+/* =========================
+   Дополнительные панели
+========================= */
 
 .analysis-panel,
 .custom-question-box,
 .compare-box,
 .history {
     padding: 11px;
-    border-radius: 16px;
-    background: rgba(15, 23, 42, 0.55);
+
     border: 1px solid var(--border);
+    border-radius: 16px;
+
+    background:
+        rgba(15, 23, 42, 0.55);
+}
+
+.compare-box {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
 }
 
 .custom-question-box {
@@ -234,61 +481,113 @@ input[type="file"] {
 
 textarea {
     width: 100%;
-    resize: vertical;
     min-height: 82px;
     padding: 11px 12px;
+
+    resize: vertical;
+
+    border: 1px solid
+        rgba(255, 255, 255, 0.14);
     border-radius: 13px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background: rgba(2, 6, 23, 0.55);
+
+    outline: none;
+
+    background:
+        rgba(2, 6, 23, 0.55);
+
     color: var(--text);
-    font-family: inherit;
     font-size: 14px;
     line-height: 1.45;
-    outline: none;
+}
+
+textarea::placeholder {
+    color: #64748b;
 }
 
 textarea:focus {
-    border-color: rgba(56, 189, 248, 0.75);
-    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.12);
+    border-color:
+        rgba(56, 189, 248, 0.75);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(56, 189, 248, 0.12);
 }
+
+/* =========================
+   Основная кнопка
+========================= */
 
 .button {
     width: 100%;
     min-height: 50px;
+    padding: 13px 16px;
+
     border: none;
     border-radius: 15px;
-    padding: 13px 16px;
-    background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--accent),
+            var(--accent-dark)
+        );
+
     color: white;
-    font-family: inherit;
     font-size: 15px;
     font-weight: 850;
     line-height: 1.3;
+
     cursor: pointer;
-    transition: 0.2s ease;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+
     touch-action: manipulation;
 }
 
 .button:hover:not(:disabled) {
     transform: translateY(-1px);
-    box-shadow: 0 12px 30px rgba(56, 189, 248, 0.25);
+
+    box-shadow:
+        0 12px 30px
+        rgba(56, 189, 248, 0.25);
+}
+
+.button:active:not(:disabled) {
+    transform: scale(0.99);
 }
 
 .button:disabled {
     opacity: 0.52;
     cursor: not-allowed;
-    background: linear-gradient(135deg, #475569, #334155);
+
+    background:
+        linear-gradient(
+            135deg,
+            #475569,
+            #334155
+        );
 }
 
+/* =========================
+   Статус и ошибки
+========================= */
+
 .status {
-    margin-top: 14px;
-    padding: 12px;
-    border-radius: 14px;
-    background: rgba(56, 189, 248, 0.08);
-    color: var(--accent);
     display: flex;
     align-items: center;
     gap: 10px;
+
+    margin-top: 14px;
+    padding: 12px;
+
+    border-radius: 14px;
+
+    background:
+        rgba(56, 189, 248, 0.08);
+
+    color: var(--accent);
     font-size: 13px;
     line-height: 1.45;
 }
@@ -296,30 +595,46 @@ textarea:focus {
 .loader {
     width: 17px;
     height: 17px;
-    border: 3px solid rgba(56, 189, 248, 0.25);
+    flex-shrink: 0;
+
+    border: 3px solid
+        rgba(56, 189, 248, 0.25);
     border-top-color: var(--accent);
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    flex-shrink: 0;
+
+    animation:
+        spin 0.8s linear infinite;
 }
 
 .error {
     margin-top: 14px;
     padding: 12px;
+
+    border: 1px solid
+        rgba(248, 113, 113, 0.35);
     border-radius: 14px;
-    background: rgba(248, 113, 113, 0.1);
-    border: 1px solid rgba(248, 113, 113, 0.35);
+
+    background:
+        rgba(248, 113, 113, 0.1);
+
     color: var(--error);
     font-size: 13px;
     line-height: 1.5;
 }
 
+/* =========================
+   Результат
+========================= */
+
 .result {
     margin-top: 16px;
     padding: 14px;
-    border-radius: 18px;
-    background: rgba(2, 6, 23, 0.45);
+
     border: 1px solid var(--border);
+    border-radius: 18px;
+
+    background:
+        rgba(2, 6, 23, 0.45);
 }
 
 .result-header,
@@ -327,6 +642,7 @@ textarea:focus {
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 10px;
     margin-bottom: 11px;
 }
@@ -339,32 +655,63 @@ textarea:focus {
 
 .copy-button,
 .clear-history-button {
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    border-radius: 999px;
     padding: 7px 10px;
-    background: rgba(56, 189, 248, 0.09);
+
+    border: 1px solid
+        rgba(56, 189, 248, 0.35);
+    border-radius: 999px;
+
+    background:
+        rgba(56, 189, 248, 0.09);
+
     color: var(--accent);
-    font-family: inherit;
     font-size: 12px;
     font-weight: 750;
+
     cursor: pointer;
     white-space: nowrap;
-    transition: 0.18s ease;
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.copy-button:hover {
+    border-color:
+        rgba(56, 189, 248, 0.65);
+
+    background:
+        rgba(56, 189, 248, 0.16);
 }
 
 .clear-history-button {
+    border-color:
+        rgba(248, 113, 113, 0.35);
+
+    background:
+        rgba(248, 113, 113, 0.08);
+
     color: #fca5a5;
-    border-color: rgba(248, 113, 113, 0.35);
-    background: rgba(248, 113, 113, 0.08);
+}
+
+.clear-history-button:hover {
+    background:
+        rgba(248, 113, 113, 0.15);
 }
 
 #resultText {
     white-space: pre-wrap;
-    line-height: 1.6;
+
     color: #e5e7eb;
     font-size: 14px;
+    line-height: 1.62;
+
     overflow-wrap: anywhere;
 }
+
+/* =========================
+   История
+========================= */
 
 .history {
     margin-top: 14px;
@@ -379,39 +726,64 @@ textarea:focus {
 .history-item {
     width: 100%;
     padding: 10px 11px;
-    border-radius: 13px;
+
     border: 1px solid var(--border);
-    background: rgba(31, 41, 55, 0.65);
+    border-radius: 13px;
+
+    background:
+        rgba(31, 41, 55, 0.65);
+
     color: var(--text);
+
     text-align: left;
     cursor: pointer;
-    font-family: inherit;
+
+    transition:
+        border-color 0.18s ease,
+        background 0.18s ease;
+}
+
+.history-item:hover {
+    border-color:
+        rgba(56, 189, 248, 0.45);
+
+    background:
+        rgba(56, 189, 248, 0.08);
 }
 
 .history-title {
     display: block;
+    margin-bottom: 3px;
+
     font-size: 13px;
     font-weight: 800;
-    margin-bottom: 3px;
 }
 
 .history-file {
     display: block;
+
     color: #cbd5e1;
     font-size: 12px;
     line-height: 1.35;
+
     overflow-wrap: anywhere;
 }
 
 .history-date {
     display: block;
     margin-top: 4px;
+
     color: var(--muted);
     font-size: 11px;
 }
 
+/* =========================
+   Подвал
+========================= */
+
 .footer {
     margin-top: 14px;
+
     color: var(--muted);
     font-size: 11px;
     line-height: 1.45;
@@ -422,11 +794,19 @@ textarea:focus {
     display: none !important;
 }
 
+/* =========================
+   Анимации
+========================= */
+
 @keyframes spin {
     to {
         transform: rotate(360deg);
     }
 }
+
+/* =========================
+   Telegram и телефоны
+========================= */
 
 @media (max-width: 600px) {
     .app {
@@ -461,6 +841,10 @@ textarea:focus {
     .upload-section,
     .role-panel {
         gap: 8px;
+    }
+
+    .role-panel {
+        margin-bottom: 9px;
     }
 
     .file-label {
@@ -504,9 +888,16 @@ textarea:focus {
         font-size: 13px;
     }
 
+    .analysis-hint {
+        margin-bottom: 8px;
+        font-size: 10px;
+    }
+
     .role-grid,
     .analysis-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr));
+
         gap: 7px;
     }
 
@@ -514,16 +905,54 @@ textarea:focus {
         min-height: 49px;
         padding: 8px;
         border-radius: 12px;
+
         font-size: 11.8px;
         line-height: 1.2;
     }
 
     .analysis-button {
-        min-height: 48px;
+        min-height: 50px;
         padding: 8px;
         border-radius: 12px;
+
         font-size: 11.7px;
         line-height: 1.18;
+    }
+
+    .analysis-button.active {
+        padding-right: 22px;
+    }
+
+    /*
+    На телефоне подсказка появляется внизу экрана
+    при фокусе на кнопке.
+    */
+    .analysis-button::after {
+        position: fixed;
+        z-index: 5000;
+
+        left: 12px;
+        right: 12px;
+        bottom: 14px;
+
+        width: auto;
+        max-width: none;
+
+        padding: 10px 12px;
+
+        font-size: 11px;
+        text-align: center;
+
+        transform: translateY(6px);
+    }
+
+    .analysis-button:hover::after,
+    .analysis-button:focus-visible::after {
+        transform: translateY(0);
+    }
+
+    .analysis-button::before {
+        display: none;
     }
 
     textarea {
@@ -569,24 +998,41 @@ textarea:focus {
     }
 }
 
+/* =========================
+   Очень узкие экраны
+========================= */
+
 @media (max-width: 360px) {
     .role-button,
     .analysis-button {
-        min-height: 47px;
+        min-height: 48px;
         padding: 7px;
-        font-size: 11px;
+        font-size: 10.8px;
+    }
+
+    .analysis-button.active {
+        padding-right: 19px;
     }
 
     h1 {
         font-size: 22px;
     }
+
+    .button {
+        font-size: 12.8px;
+    }
 }
+
+/* =========================
+   Фокус
+========================= */
 
 .role-button:focus-visible,
 .analysis-button:focus-visible,
 .button:focus-visible,
 .copy-button:focus-visible,
-.clear-history-button:focus-visible {
+.clear-history-button:focus-visible,
+.history-item:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 3px;
 }
